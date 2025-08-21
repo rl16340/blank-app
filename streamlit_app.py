@@ -38,6 +38,6 @@ engine = create_engine(DATABASE_URL)
 # Test the connection
 try:
     with engine.connect() as connection:
-        print("Connection successful!")
+        st.write("Connection successful!")
 except Exception as e:
     print(f"Failed to connect: {e}")
