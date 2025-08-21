@@ -1,43 +1,24 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import sqlalchemy
+from db import get_engine
+from sqlalchemy import text
 
-
-chart_data = pd.DataFrame(
-     np.random.randn(20, 3),
-     columns=['a', 'b', 'c'])
-
-st.line_chart(chart_data)
-
-
-# Supabase connection
-from sqlalchemy import create_engine
-# from sqlalchemy.pool import NullPool
-from dotenv import load_dotenv
-import os
-
-# Load environment variables from .env
-load_dotenv()
-
-# Fetch variables
-USER = os.getenv("user")
-PASSWORD = os.getenv("password")
-HOST = os.getenv("host")
-PORT = os.getenv("port")
-DBNAME = os.getenv("dbname")
-
-# Construct the SQLAlchemy connection string
-DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-
-# Create the SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
-# If using Transaction Pooler or Session Pooler, we want to ensure we disable SQLAlchemy client side pooling -
-# https://docs.sqlalchemy.org/en/20/core/pooling.html#switching-pool-implementations
-# engine = create_engine(DATABASE_URL, poolclass=NullPool)
+engine = get_engine()
 
 # Test the connection
-try:
-    with engine.connect() as connection:
-        st.write("Connection successful!")
-except Exception as e:
-    print(f"Failed to connect: {e}")
+
+def fetch_data(query: str) -> pd.DataFrame:
+    with engine.connect() as conn:
+        result = conn.execute(text(query))
+        rows = result.fetchall()
+        columns = result.keys()
+    return pd.DataFrame(rows, columns=columns)
+
+# --- Streamlit UI ---
+st.title("Supabase Data Viewer")
+
+# Example usage
+df = fetch_data("SELECT * FROM source_data")
+st.dataframe(df)
